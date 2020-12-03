@@ -35,7 +35,7 @@ class Database:
         return self.cur.execute("select count(*) from BikeShare").fetchone()
 
     def insert_values(self):
-        with open('BikeShare.csv', 'r') as f:
+        with open('assets/BikeShare.csv', 'r') as f:
             reader = csv.reader(f)
             data = next(reader)
             query = 'INSERT into BikeShare({0}) values ({1})'

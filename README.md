@@ -1,5 +1,5 @@
 <img src="https://in.bgu.ac.il/marketing/graphics/BGU.sig3-he-en-white.png" height="48px" align="right" />  
-<img src=https://github.com/Serfati/velodrome/blob/master/logo.png height="120"/>  
+<img src=https://github.com/Serfati/velodrome/blob/master/assets/logo.png height="120"/>  
 
   
 ![](https://codeclimate.com/github/JonSn0w/Hyde/badges/gpa.svg)   ![](https://img.shields.io/badge/version-0.1.0-blueviolet)  ![](https://img.shields.io/apm/l/atomic-design-ui.svg?)  
@@ -43,7 +43,7 @@ You can modify or contribute to this project by following the steps below:
 
 ### Screenshot
 
-<img src="https://github.com/Serfati/velodrome/blob/master/sc.png" height="400"/>
+<img src="https://github.com/Serfati/velodrome/blob/master/assets/sc.png" height="400"/>
   
 ---  
   
