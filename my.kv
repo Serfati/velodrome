@@ -1,0 +1,101 @@
+
+<Velodrome>:
+    canvas.before:
+		Rectangle:
+			pos: self.pos
+			size: self.size
+			source: 'bg.jpg'
+
+    start:start
+	time:time
+	count:count
+
+    GridLayout:
+        cols:1
+        size: root.width-180, root.height+50
+        pos: 90,40
+        Label:
+            text: ''
+
+        Image:
+            source: 'logo.png'
+
+        Label:
+            text: 'Velodrome'
+            bold: True
+            font_size: 17
+
+        GridLayout:
+            cols: 2
+
+            Label:
+                text: "what is your location?"
+                bold: True
+                color: (91, 217, 179)
+            TextInput:
+                id:start
+                hint_text: 'Enter Location Here!'
+                hint_text_color: (91, 217, 179,0.5)
+                multinline: False
+                size: 50,50
+                background_color: (91, 217, 179,0.5)
+
+            Slider:
+                id: time
+                min: 1
+                max: 100
+                value: 1
+                step: 1
+            Label:
+                text: 'Riding Time = {} min'.format(time.value)
+                bold: True
+                color: (91, 217, 179)
+            Slider:
+                id: count
+                min: 1
+                max: 10
+                value: 1
+                step: 1
+            Label:
+                text: 'No. of Routes = {}'.format(count.value)
+                bold: True
+                color: (91, 217, 179)
+            
+            Label:
+                text: ' '
+
+            GridLayout:
+                cols:2
+                padding: 5
+                BoxLayout:
+                    orientation: 'horizontal'
+                    padding: 3 
+                    Button:
+                        text: 'Clear'
+                        color: (255, 255, 255)
+                        bold: True
+                        font_size: 15
+                        on_press: count.value = 1; time.value = 1; start.text = "";
+                        background_normal: ''
+                        background_color: (255, 255, 255,0.3)
+                    Label:
+                        text: ''
+                    Button:
+                        text: 'Example'
+                        bold: True
+                        color: (255, 255, 255)
+                        font_size: 15
+                        on_press: count.value = 5; time.value = 5; start.text = "Oakland Ave";
+                        background_normal: ''
+                        background_color: (255, 255, 255,0.3)
+        BoxLayout:
+            orientation:'vertical'
+            padding : 15
+            Button:
+                text: 'Search'
+                color: (91, 217, 179)
+                bold: True
+                font_size: 30
+                on_press: root.recommendation()
+                background_normal: ''
+                background_color: (91, 217, 179,0.3)
