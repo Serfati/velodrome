@@ -36,10 +36,13 @@ You can modify or contribute to this project by following the steps below:
  $> python frontend.py
  ```  
 
-- Choose a parameters
+- Choose parameters
+  - Start Location
+  - Riding Time
+  - No. of Results set size
 
 - Click **"Search"**
-  - or click **"Example"** for a pre set values or.
+  - or click **"Example"** for a pre set values.
 
 ### Screenshot
 
