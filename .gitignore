@@ -1,3 +1,4 @@
-assets/BikeShare.csv
+assets/*
 /database.db
 /מטלת בית 2.pdf
+__pycache__/*

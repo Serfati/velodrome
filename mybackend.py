@@ -1,5 +1,6 @@
 import csv
 import sqlite3
+import model
 
 class Database:
     
@@ -44,31 +45,69 @@ class Database:
                 self.cur.execute(query, data)
             self.conn.commit()
 
-    def getRecommendations(self, currentLocation, spendTime, numRecommendations):
-        res = self.cur.execute("select * from BikeShare "
-                               "where StartStationName like '" + currentLocation +
-                               "' and TripDurationinmin <= " + str(spendTime)).fetchall()
-        return 'start Ranking function', res
-
+    def getRecommendations(self, loc, time, k):
+        raw = self.cur.execute("select * from BikeShare "
+                               "where StartStationName like '" + loc +
+                               "' and TripDurationinmin <= " + str(time)).fetchall()
+        return self.ranker(self, raw, time, k)
 
     
-def validation(userStart, userTime, userAmount):
-    if userStart == "" or userStart == None:
+    def ranker(self, raw, time, k):
+        response = {}
+        return sorted(response.items(), key=lambda item: item[1], reverse=True)
+
+
+def model(k=29):
+    from sklearn.neighbors import KNeighborsClassifier
+    import pandas as pd
+    from sklearn import preprocessing
+
+    df = pd.read_csv('assets/BikeShare.csv')
+    df.index = [x for x in range(1, len(df.values)+1)]
+
+    X = df[['TripDuration', 'StartStationID',
+            'StartStationLatitude', 'StartStationLongitude', 'TripDurationinmin']].values
+
+    y = df['EndStationID'].values
+
+    X = preprocessing.StandardScaler().fit(X).transform(X.astype(float))
+    from sklearn.model_selection import train_test_split
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.1, random_state=4)
+
+    #Train Model and Predict
+    knn = KNeighborsClassifier(n_neighbors=k).fit(X_train, y_train)
+
+    ypred = knn.predict(X_test)
+
+    from sklearn import metrics
+
+    print("Test set Accuracy: ", metrics.accuracy_score(y_test, ypred))
+    
+
+def validation(location, duration, k):
+    if location == "" or location == None:
         return "Start location is mandatory."
-    if userTime == "" or userTime == None:
+    if duration == "" or duration == None:
         return "Time Range is mandatory."
-    if userAmount == "" or userAmount == None:
+    if k == "" or k == None:
         return "Results size is mandatory."
     try:
-        userTime = int(userTime)
+        duration = int(duration)
     except ValueError:
         return "Only numbers acceptable for riding time." 
     try:
-        userAmount = int(userAmount)
+        k = int(k)
     except ValueError:
         return "Only numbers acceptable for results size."        
-    if(userTime < 1):
+    if(duration < 1):
         return "Negative riding time."
-    if (userAmount < 1):
+    if (k < 1):
         return "Negative results size."
     return True
+
+
+if __name__ == "__main__":
+    model()
+
