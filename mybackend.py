@@ -26,8 +26,24 @@ class Database:
             self.conn = sqlite3.connect("database.db")
             data.to_sql("BikeShare", self.conn, if_exists="replace")
             self.cur = self.conn.cursor()
-
-
+            # self.cur.execute("CREATE TABLE IF NOT EXISTS BikeShare ("
+            #             "TripDuration INT,"
+            #             "StartTime DATE,"
+            #             "StopTime DATE,"
+            #             "StartStationID INT,"
+            #             "StartStationName TEXT,"
+            #             "StartStationLatitude FLOAT,"
+            #             "StartStationLongitude FLOAT,"
+            #             "EndStationID INT,"
+            #             "EndStationName TEXT,"
+            #             "EndStationLatitude FLOAT,"
+            #             "EndStationLongitude FLOAT,"
+            #             "BikeID INT,"
+            #             "UserType TEXT,"
+            #             "BirthYear INT,"
+            #             "Gender INT,"
+            #             "TripDurationinmin INT)")
+            
     def shape(self):
         return self.cur.execute("select count(*) from BikeShare").fetchone()
 
@@ -52,40 +68,40 @@ class Database:
         return sorted(response.items(), key=lambda item: item[1], reverse=True)
 
 
-def create_model(k=29):
-    df = pd.read_csv('BikeShare.csv')
-    df.index = [x for x in range(1, len(df.values)+1)]
+    def create_model(self, k=29):
+        df = pd.read_csv('BikeShare.csv')
+        df.index = [x for x in range(1, len(df.values)+1)]
 
-    X = df[['TripDuration', 'StartStationID',
-            'StartStationLatitude', 'StartStationLongitude', 'TripDurationinmin']].values
+        X = df[['TripDuration', 'StartStationID',
+                'StartStationLatitude', 'StartStationLongitude', 'TripDurationinmin']].values
 
-    y = df['EndStationID'].values
+        y = df['EndStationID'].values
 
-    X = preprocessing.StandardScaler().fit(X).transform(X.astype(float))
-    from sklearn.model_selection import train_test_split
+        X = preprocessing.StandardScaler().fit(X).transform(X.astype(float))
+        from sklearn.model_selection import train_test_split
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.01, random_state=4)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.01, random_state=4)
 
-    # Train Model and Predict
-    knn = KNeighborsClassifier(n_neighbors=k).fit(X_train, y_train)
+        # Train Model and Predict
+        knn = KNeighborsClassifier(n_neighbors=k).fit(X_train, y_train)
 
-    knnPickle = open('knnpickle_file', 'wb')
+        knnPickle = open('knnpickle_file', 'wb')
 
-    pickle.dump(knn, knnPickle)
+        pickle.dump(knn, knnPickle)
 
 
-def predict(record):
-    from numpy import asarray
-    df = pd.read_csv('BikeShare.csv')
-    df.index = [x for x in range(1, len(df.values)+1)]
-    X = df[['TripDuration', 'StartStationID',
-            'StartStationLatitude', 'StartStationLongitude', 'TripDurationinmin']].values
-    record = asarray(record).reshape(1, -1)
-    record = preprocessing.StandardScaler().fit(X).transform(record.astype(float))
-    knn = pickle.load(open('knnpickle_file', 'rb'))
-    pred = knn.predict(record)
-    return pred
+    def predict(self, record):
+        from numpy import asarray
+        df = pd.read_csv('BikeShare.csv')
+        df.index = [x for x in range(1, len(df.values)+1)]
+        X = df[['TripDuration', 'StartStationID',
+                'StartStationLatitude', 'StartStationLongitude', 'TripDurationinmin']].values
+        record = asarray(record).reshape(1, -1)
+        record = preprocessing.StandardScaler().fit(X).transform(record.astype(float))
+        knn = pickle.load(open('knnpickle_file', 'rb'))
+        pred = knn.predict(record)
+        return pred
 
 
 def validation(location, duration, k):
@@ -109,10 +125,5 @@ def validation(location, duration, k):
         return "Negative results size."
     return True
 
-
 db = Database()
 
-if __name__ == "__main__":
-    record = [300, 3212, 40.7376037, -74.0524783, 5]
-    pred = predict(record=record)
-    print(pred)

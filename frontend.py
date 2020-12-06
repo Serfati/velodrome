@@ -21,7 +21,7 @@ class Velodrome(GridLayout):
         validation = backend.validation(userStart, userTime, userAmount)
         if validation:
             record = [userTime*60, 3212, 40.7376037, -74.0524783, userTime]
-            pred = backend.predict(record)
+            pred = backend.db.predict(record)
             print(pred)
 
         self.start.text = ""
