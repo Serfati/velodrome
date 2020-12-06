@@ -1,4 +1,7 @@
 
+<Label>:
+    font_name: 'assets/fonts/Montserrat-SemiBold'
+
 <Velodrome>:
     canvas.before:
 		Rectangle:
@@ -22,15 +25,18 @@
 
         Label:
             text: 'Velodrome'
+            font_name: 'assets/fonts/Montserrat-BoldItalic'
             bold: True
-            font_size: 17
+            font_size: 30
+            color: (50, 100, 100,1)
 
         GridLayout:
             cols: 2
 
             Label:
-                text: "what is your location?"
+                text: "What is your location?"
                 bold: True
+                font_size: 16
                 color: (91, 217, 179)
             TextInput:
                 id:start
@@ -39,15 +45,22 @@
                 multinline: False
                 size: 50,50
                 background_color: (91, 217, 179,0.5)
-
+            
+            Label:
+                text: 'Trip Duration -> {} min'.format(time.value)
+                bold: True
+                font_size: 16
+                color: (91, 217, 179)
             Slider:
                 id: time
                 min: 1
-                max: 337671
+                max: 100
                 value: 1
                 step: 1
+            
             Label:
-                text: 'Riding Time = {} min'.format(time.value)
+                text: 'Return {} Routes '.format(count.value)
+                font_size: 16
                 bold: True
                 color: (91, 217, 179)
             Slider:
@@ -56,10 +69,6 @@
                 max: 10
                 value: 1
                 step: 1
-            Label:
-                text: 'No. of Routes = {}'.format(count.value)
-                bold: True
-                color: (91, 217, 179)
             
             Label:
                 text: ' '
@@ -71,7 +80,8 @@
                     orientation: 'horizontal'
                     padding: 3 
                     Button:
-                        text: 'Clear'
+                        text: 'clear'
+                        font_name: 'assets/fonts/Montserrat-Regular'
                         color: (255, 255, 255)
                         bold: True
                         font_size: 15
@@ -81,7 +91,8 @@
                     Label:
                         text: ''
                     Button:
-                        text: 'Example'
+                        text: 'example'
+                        font_name: 'assets/fonts/Montserrat-Regular'
                         bold: True
                         color: (255, 255, 255)
                         font_size: 15
@@ -93,8 +104,9 @@
             padding : 15
             Button:
                 text: 'Search'
-                color: (91, 217, 179)
+                color: (80, 200, 200,1)
                 bold: True
+                font_name: 'assets/fonts/Montserrat-Medium'
                 font_size: 30
                 on_press: root.recommendation()
                 background_normal: ''

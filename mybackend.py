@@ -1,42 +1,38 @@
+from sklearn.preprocessing import MinMaxScaler
+from numpy import asarray
+import pickle
+from sklearn import metrics
+from sklearn.neighbors import KNeighborsClassifier
+import timeit
+import numpy as np
+import pandas as pd
+from sklearn import preprocessing
 import csv
 import sqlite3
-import model
+
 
 class Database:
-    
-    def __init__(self):
-        self.conn = sqlite3.connect('database.db')
-        self.cur = self.conn.cursor()
-        self.init_db()
 
-    def init_db(self):
-        self.cur.execute("CREATE TABLE IF NOT EXISTS BikeShare ("
-                         "TripDuration INT,"
-                         "StartTime DATE,"
-                         "StopTime DATE,"
-                         "StartStationID INT,"
-                         "StartStationName TEXT,"
-                         "StartStationLatitude FLOAT,"
-                         "StartStationLongitude FLOAT,"
-                         "EndStationID INT,"
-                         "EndStationName TEXT,"
-                         "EndStationLatitude FLOAT,"
-                         "EndStationLongitude FLOAT,"
-                         "BikeID INT,"
-                         "UserType TEXT,"
-                         "BirthYear INT,"
-                         "Gender INT,"
-                         "TripDurationinmin INT)")
-        self.conn.commit()
-        shape = self.shape()[0] != 0
-        if not shape:
-            self.insert_values()
+    def __init__(self):
+        import os
+        files = os.listdir("./")
+        if "database.db" in files:
+            self.conn = sqlite3.connect("database.db")
+            self.cur = self.conn.cursor()
+            if not self.shape()[0] :
+                self.insert_values()
+        else:
+            data = pd.read_csv("BikeShare.csv")
+            self.conn = sqlite3.connect("database.db")
+            data.to_sql("BikeShare", self.conn, if_exists="replace")
+            self.cur = self.conn.cursor()
+
 
     def shape(self):
         return self.cur.execute("select count(*) from BikeShare").fetchone()
 
     def insert_values(self):
-        with open('assets/BikeShare.csv', 'r') as f:
+        with open('BikeShare.csv', 'r') as f:
             reader = csv.reader(f)
             data = next(reader)
             query = 'INSERT into BikeShare({0}) values ({1})'
@@ -51,18 +47,13 @@ class Database:
                                "' and TripDurationinmin <= " + str(time)).fetchall()
         return self.ranker(self, raw, time, k)
 
-    
     def ranker(self, raw, time, k):
         response = {}
         return sorted(response.items(), key=lambda item: item[1], reverse=True)
 
 
-def model(k=29):
-    from sklearn.neighbors import KNeighborsClassifier
-    import pandas as pd
-    from sklearn import preprocessing
-
-    df = pd.read_csv('assets/BikeShare.csv')
+def create_model(k=29):
+    df = pd.read_csv('BikeShare.csv')
     df.index = [x for x in range(1, len(df.values)+1)]
 
     X = df[['TripDuration', 'StartStationID',
@@ -74,17 +65,28 @@ def model(k=29):
     from sklearn.model_selection import train_test_split
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.1, random_state=4)
+        X, y, test_size=0.01, random_state=4)
 
-    #Train Model and Predict
+    # Train Model and Predict
     knn = KNeighborsClassifier(n_neighbors=k).fit(X_train, y_train)
 
-    ypred = knn.predict(X_test)
+    knnPickle = open('knnpickle_file', 'wb')
 
-    from sklearn import metrics
+    pickle.dump(knn, knnPickle)
 
-    print("Test set Accuracy: ", metrics.accuracy_score(y_test, ypred))
-    
+
+def predict(record):
+    from numpy import asarray
+    df = pd.read_csv('BikeShare.csv')
+    df.index = [x for x in range(1, len(df.values)+1)]
+    X = df[['TripDuration', 'StartStationID',
+            'StartStationLatitude', 'StartStationLongitude', 'TripDurationinmin']].values
+    record = asarray(record).reshape(1, -1)
+    record = preprocessing.StandardScaler().fit(X).transform(record.astype(float))
+    knn = pickle.load(open('knnpickle_file', 'rb'))
+    pred = knn.predict(record)
+    return pred
+
 
 def validation(location, duration, k):
     if location == "" or location == None:
@@ -96,11 +98,11 @@ def validation(location, duration, k):
     try:
         duration = int(duration)
     except ValueError:
-        return "Only numbers acceptable for riding time." 
+        return "Only numbers acceptable for riding time."
     try:
         k = int(k)
     except ValueError:
-        return "Only numbers acceptable for results size."        
+        return "Only numbers acceptable for results size."
     if(duration < 1):
         return "Negative riding time."
     if (k < 1):
@@ -108,6 +110,9 @@ def validation(location, duration, k):
     return True
 
 
-if __name__ == "__main__":
-    model()
+db = Database()
 
+if __name__ == "__main__":
+    record = [300, 3212, 40.7376037, -74.0524783, 5]
+    pred = predict(record=record)
+    print(pred)

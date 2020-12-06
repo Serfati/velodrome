@@ -11,18 +11,18 @@ class Velodrome(GridLayout):
     start = ObjectProperty(None)
     time = ObjectProperty(None)
     count = ObjectProperty(None)
-
+    print('from fe: ', backend.db.shape())
 
     def recommendation(self):
         userStart = self.start.text
         userTime = self.time.value
         userAmount = self.count.value
-        db = backend.Database()
 
         validation = backend.validation(userStart, userTime, userAmount)
         if validation:
-            print('Query is: ', userStart,' ' ,userTime,' ', userAmount)
-            print(db.shape())
+            record = [userTime*60, 3212, 40.7376037, -74.0524783, userTime]
+            pred = backend.predict(record)
+            print(pred)
 
         self.start.text = ""
         self.time.value = 1
