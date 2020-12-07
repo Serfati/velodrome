@@ -49,13 +49,7 @@ You can modify or contribute to this project by following the steps below:
 <img src="https://github.com/Serfati/velodrome/blob/master/assets/sc.png" height="400"/>
   
 ---  
-  
-**_Team Members_**:  
-  
-| Name             | Username                                    | Contact Info            |  ID           |  
-| ---------------- | ------------------------------------------- | ----------------------- |  ------------ |
-| _Haim Rayes_     | [HaimReyes](https://github.com/HaimReyes)      | Reyes@post.bgu.ac.il    |  319510475    |
-| _Avihai Serfati_ | [Serfati](https://github.com/serfati)       | serfata@post.bgu.ac.il  |   204520803   |   
+> Author Serfati
   
 ## ⚖️ License  
   
