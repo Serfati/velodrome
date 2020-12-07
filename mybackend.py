@@ -1,9 +1,9 @@
 from sklearn.preprocessing import MinMaxScaler
-from numpy import asarray
+import math
 import pickle
 from sklearn import metrics
 from sklearn.neighbors import KNeighborsClassifier
-import timeit
+from datetime import datetime
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
@@ -19,7 +19,7 @@ class Database:
         if "database.db" in files:
             self.conn = sqlite3.connect("database.db")
             self.cur = self.conn.cursor()
-            if not self.shape()[0] :
+            if not self.shape()[0]:
                 self.insert_values()
         else:
             data = pd.read_csv("BikeShare.csv")
@@ -43,30 +43,67 @@ class Database:
             #             "BirthYear INT,"
             #             "Gender INT,"
             #             "TripDurationinmin INT)")
-            
+
     def shape(self):
-        return self.cur.execute("select count(*) from BikeShare").fetchone()
+        return self.cur.execute("SELECT count(*) FROM BikeShare").fetchone()
 
     def insert_values(self):
         with open('BikeShare.csv', 'r') as f:
             reader = csv.reader(f)
             data = next(reader)
-            query = 'INSERT into BikeShare({0}) values ({1})'
+            query = 'INSERT into BikeShare({0}) VALUES ({1})'
             query = query.format(','.join(data), ','.join('?' * len(data)))
             for data in reader:
                 self.cur.execute(query, data)
             self.conn.commit()
 
-    def getRecommendations(self, loc, time, k):
-        raw = self.cur.execute("select * from BikeShare "
-                               "where StartStationName like '" + loc +
-                               "' and TripDurationinmin <= " + str(time)).fetchall()
-        return self.ranker(self, raw, time, k)
+    def get_recommendations(self, loc, time, k):
+        raw = self.cur.execute("SELECT * FROM BikeShare "
+                               "WHERE StartStationName like '" + loc +
+                               "' AND TripDurationinmin <= " + str(time)).fetchall()
 
-    def ranker(self, raw, time, k):
-        response = {}
-        return sorted(response.items(), key=lambda item: item[1], reverse=True)
+        return self.ranker(raw, loc, time)[:k]
 
+    def score(self, item, pred, distance_weight=0.3, time_weight=0.3, day_light_weight=0.4):
+        # score distance by euclidean distance (with min distance of 1 km)
+        distance = math.sqrt(
+            (item[6] - item[10]) ** 2 + (item[7] - item[10]) ** 2)/1000  # convert to km
+        distance = distance if distance > 1 else 1
+        distance_score = 1/(1 + distance)
+        # score to starting time by its distance from current time
+        t1 = datetime.now().strftime("%H:%M")
+        t2 = item[2].split(sep=" ")[1]
+        diff_minutes = datetime.strptime(
+            t1, '%H:%M') - datetime.strptime(t2, '%H:%M')
+        hours_from_now = diff_minutes.seconds / 60 / 60
+        time_from_start_score = 1/hours_from_now if hours_from_now > 1 else 1
+        # score the starting time by daylight
+        is_daytime = 1 if datetime.strptime(
+            t2, '%H:%M') < datetime.strptime('18:00', '%H:%M') else 0.5
+        # weighted score sum
+        score = 0.1 + distance_weight*distance_score + \
+            time_from_start_score*time_weight + is_daytime*day_light_weight
+        if item[5] == pred:
+            score += 0.15
+        return score
+
+    def ranker(self, raw, loc, time):
+        # 0 TripDuration 1 StartTime 2 StopTime 3 StartStationID 4 StartStationName	5 StartStationLatitude
+        # 6 StartStationLongitude 7 EndStationID 8 EndStationName 9 EndStationLatitude 10 EndStationLongitude
+        # 11 BikeID 12 UserType 13 BirthYear 14 Gender 15 TripDuration in min
+        pred = self.predict(loc=loc, time=time)
+        ranked_recommendations = sorted(raw,
+                                        key=lambda item: self.score(item, pred),
+                                        reverse=True)
+        ranked_recommendations = [e[9]
+                                  for e in ranked_recommendations if e[9] != loc]
+
+        recommendations = []
+        # remove duplicate and keep the order
+        for location in ranked_recommendations:
+            if location not in recommendations:
+                recommendations.append(location)
+        return recommendations
 
     def create_model(self, k=29):
         df = pd.read_csv('BikeShare.csv')
@@ -75,7 +112,7 @@ class Database:
         X = df[['TripDuration', 'StartStationID',
                 'StartStationLatitude', 'StartStationLongitude', 'TripDurationinmin']].values
 
-        y = df['EndStationID'].values
+        y = df['EndStationName'].values
 
         X = preprocessing.StandardScaler().fit(X).transform(X.astype(float))
         from sklearn.model_selection import train_test_split
@@ -90,18 +127,20 @@ class Database:
 
         pickle.dump(knn, knnPickle)
 
-
-    def predict(self, record):
+    def predict(self, loc, time):
+        rec = self.cur.execute(
+            "SELECT StartStationID,StartStationLatitude, StartStationLongitude FROM BikeShare WHERE StartStationName like '" + loc + "' LIMIT 1").fetchone()
+        sample = [time*60, rec[0], rec[1], rec[2], time]
         from numpy import asarray
         df = pd.read_csv('BikeShare.csv')
         df.index = [x for x in range(1, len(df.values)+1)]
         X = df[['TripDuration', 'StartStationID',
                 'StartStationLatitude', 'StartStationLongitude', 'TripDurationinmin']].values
-        record = asarray(record).reshape(1, -1)
+        record = asarray(sample).reshape(1, -1)
         record = preprocessing.StandardScaler().fit(X).transform(record.astype(float))
         knn = pickle.load(open('knnpickle_file', 'rb'))
         pred = knn.predict(record)
-        return pred
+        return pred[0]
 
 
 def validation(location, duration, k):
@@ -125,5 +164,6 @@ def validation(location, duration, k):
         return "Negative results size."
     return True
 
-db = Database()
 
+db = Database()
+db.predict(loc='Oakland Ave', time=5)

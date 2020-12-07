@@ -47,28 +47,30 @@
                 background_color: (91, 217, 179,0.5)
             
             Label:
-                text: 'Trip Duration -> {} min'.format(time.value)
+                text: 'Trip Duration -> {} min'.format(time.text)
                 bold: True
                 font_size: 16
                 color: (91, 217, 179)
-            Slider:
-                id: time
-                min: 1
-                max: 100
-                value: 1
-                step: 1
+            TextInput:
+                id:time
+                hint_text: 'Enter Trip Duration'
+                hint_text_color: (91, 217, 179,0.5)
+                multinline: False
+                size: 50,50
+                background_color: (91, 217, 179,0.5)
             
             Label:
-                text: 'Return {} Routes '.format(count.value)
+                text: 'Return {} Routes '.format(count.text)
                 font_size: 16
                 bold: True
                 color: (91, 217, 179)
-            Slider:
-                id: count
-                min: 1
-                max: 10
-                value: 1
-                step: 1
+            TextInput:
+                id:count
+                hint_text: 'Enter Number of Results!'
+                hint_text_color: (91, 217, 179,0.5)
+                multinline: False
+                size: 50,50
+                background_color: (91, 217, 179,0.5)
             
             Label:
                 text: ' '
@@ -85,7 +87,7 @@
                         color: (255, 255, 255)
                         bold: True
                         font_size: 15
-                        on_press: count.value = 1; time.value = 1; start.text = "";
+                        on_press: count.text = ''; time.text = ''; start.text = "";
                         background_normal: ''
                         background_color: (255, 255, 255,0.3)
                     Label:
@@ -96,7 +98,7 @@
                         bold: True
                         color: (255, 255, 255)
                         font_size: 15
-                        on_press: count.value = 5; time.value = 5; start.text = "Oakland Ave";
+                        on_press: count.text = '5'; time.text = '5'; start.text = "Oakland Ave";
                         background_normal: ''
                         background_color: (255, 255, 255,0.3)
         BoxLayout:

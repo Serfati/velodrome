@@ -24,7 +24,7 @@ def querySearch():
 
 
 '''
-runs flask server on port=5000
+runs flask server on port 5000
 '''
 if __name__ == '__main__':
     print("server runs on port 5000")

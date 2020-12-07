@@ -7,29 +7,8 @@ from kivy.uix.button import Button
 from kivy.properties import ObjectProperty
 
 
-class Velodrome(GridLayout):
-    start = ObjectProperty(None)
-    time = ObjectProperty(None)
-    count = ObjectProperty(None)
-    print('from fe: ', backend.db.shape())
-
-    def recommendation(self):
-        userStart = self.start.text
-        userTime = self.time.value
-        userAmount = self.count.value
-
-        validation = backend.validation(userStart, userTime, userAmount)
-        if validation:
-            record = [userTime*60, 3212, 40.7376037, -74.0524783, userTime]
-            pred = backend.db.predict(record)
-            print(pred)
-
-        self.start.text = ""
-        self.time.value = 1
-        self.count.value = 1
-
 class MyPopup(Popup):
-    def __init__(self, **kwargs):
+    def __init__(self):
         grid = GridLayout(cols=1)
         super().__init__(content=grid, size_hint=(.4, .4))
         self.msg = Label(halign="center", valign="middle")
@@ -44,6 +23,38 @@ class MyPopup(Popup):
     def set_title(self, title):
         self.title = title
 
+
+class Velodrome(GridLayout):
+    start = ObjectProperty(None)
+    time = ObjectProperty(None)
+    count = ObjectProperty(None)
+
+    def recommendation(self):
+        userStart = self.start.text
+        duration = self.time.text
+        count = self.count.text
+
+        validation = backend.validation(userStart, duration, count)
+        if validation == True:
+            recommend = backend.db.get_recommendations(
+                userStart, int(duration), int(count))
+            popup = MyPopup()
+            popup.set_title("System Recommendation")
+            if recommend:
+                popup.set_msg("We Recommend you to travel to:\n" +
+                            "\n".join(recommend))
+            else:
+                popup.set_msg("Nothing to show!")
+            popup.open()
+        else:
+            popup = MyPopup()
+            popup.set_title("Input Error")
+            popup.set_msg(validation)
+            popup.open()
+
+        self.start.text = ''
+        self.time.text = ''
+        self.count.text = ''
 
 class MyApp(App):
     def build(self):
