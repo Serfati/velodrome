@@ -1,14 +1,12 @@
-from sklearn.preprocessing import MinMaxScaler
 import math
 import pickle
-from sklearn import metrics
-from sklearn.neighbors import KNeighborsClassifier
-from datetime import datetime
-import numpy as np
-import pandas as pd
-from sklearn import preprocessing
 import csv
 import sqlite3
+import pandas as pd
+
+from datetime import datetime
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
 
 
 class Database:
@@ -93,7 +91,8 @@ class Database:
         # 11 BikeID 12 UserType 13 BirthYear 14 Gender 15 TripDuration in min
         pred = self.predict(loc=loc, time=time)
         ranked_recommendations = sorted(raw,
-                                        key=lambda item: self.score(item, pred),
+                                        key=lambda item: self.score(
+                                            item, pred),
                                         reverse=True)
         ranked_recommendations = [e[9]
                                   for e in ranked_recommendations if e[9] != loc]
@@ -105,31 +104,11 @@ class Database:
                 recommendations.append(location)
         return recommendations
 
-    def create_model(self, k=29):
-        df = pd.read_csv('BikeShare.csv')
-        df.index = [x for x in range(1, len(df.values)+1)]
-
-        X = df[['TripDuration', 'StartStationID',
-                'StartStationLatitude', 'StartStationLongitude', 'TripDurationinmin']].values
-
-        y = df['EndStationName'].values
-
-        X = preprocessing.StandardScaler().fit(X).transform(X.astype(float))
-        from sklearn.model_selection import train_test_split
-
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.01, random_state=4)
-
-        # Train Model and Predict
-        knn = KNeighborsClassifier(n_neighbors=k).fit(X_train, y_train)
-
-        knnPickle = open('knnpickle_file', 'wb')
-
-        pickle.dump(knn, knnPickle)
-
     def predict(self, loc, time):
         rec = self.cur.execute(
             "SELECT StartStationID,StartStationLatitude, StartStationLongitude FROM BikeShare WHERE StartStationName like '" + loc + "' LIMIT 1").fetchone()
+        if not rec:
+            return -1
         sample = [time*60, rec[0], rec[1], rec[2], time]
         from numpy import asarray
         df = pd.read_csv('BikeShare.csv')
@@ -137,15 +116,40 @@ class Database:
         X = df[['TripDuration', 'StartStationID',
                 'StartStationLatitude', 'StartStationLongitude', 'TripDurationinmin']].values
         record = asarray(sample).reshape(1, -1)
-        record = preprocessing.StandardScaler().fit(X).transform(record.astype(float))
+        record = StandardScaler().fit(X).transform(record.astype(float))
         knn = pickle.load(open('knnpickle_file', 'rb'))
         pred = knn.predict(record)
         return pred[0]
 
 
+def create_model(k=29):
+    df = pd.read_csv('BikeShare.csv')
+    df.index = [x for x in range(1, len(df.values)+1)]
+
+    X = df[['TripDuration', 'StartStationID',
+            'StartStationLatitude', 'StartStationLongitude', 'TripDurationinmin']].values
+
+    y = df['EndStationName'].values
+
+    X = StandardScaler().fit(X).transform(X.astype(float))
+    from sklearn.model_selection import train_test_split
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=4)
+
+    # Train Model and Predict
+    knn = KNeighborsClassifier(n_neighbors=k).fit(X_train, y_train)
+
+    knnPickle = open('knnpickle_file', 'wb')
+
+    pickle.dump(knn, knnPickle)
+
+
 def validation(location, duration, k):
     if location == "" or location == None:
         return "Start location is mandatory."
+    if location.isdigit():
+        return "Location not found"
     if duration == "" or duration == None:
         return "Time Range is mandatory."
     if k == "" or k == None:
@@ -163,7 +167,3 @@ def validation(location, duration, k):
     if (k < 1):
         return "Negative results size."
     return True
-
-
-db = Database()
-db.predict(loc='Oakland Ave', time=5)
