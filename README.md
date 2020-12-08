@@ -45,11 +45,19 @@ You can modify or contribute to this project by following the steps below:
   - or click **"Example"** for a pre set values.
 
 ### Screenshot
-
+- Main Screen
+  
 <img src="https://github.com/Serfati/velodrome/blob/master/assets/sc.png" height="400"/>
   
+
+- Results 
+
+<img src="https://github.com/Serfati/velodrome/blob/master/assets/res.png" height="400"/>
+
+
 ---  
-> Author Serfati
+
+> author Serfati
   
 ## ⚖️ License  
   

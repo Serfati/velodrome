@@ -29,6 +29,7 @@ class Velodrome(GridLayout):
     start = ObjectProperty(None)
     time = ObjectProperty(None)
     count = ObjectProperty(None)
+    
 
     def recommendation(self):
         userStart = self.start.text
@@ -65,3 +66,4 @@ class MyApp(App):
 if __name__ == "__main__":
     db = backend.Database()
     MyApp().run()
+   
