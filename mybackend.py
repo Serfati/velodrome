@@ -14,6 +14,7 @@ class Database:
     def __init__(self):
         import os
         files = os.listdir("./")
+        # loads data from db or BikeShare.csv
         if "database.db" in files:
             self.conn = sqlite3.connect("database.db")
             self.cur = self.conn.cursor()
@@ -66,21 +67,25 @@ class Database:
         # score distance by euclidean distance (with min distance of 1 km)
         distance = math.sqrt(
             (item[6] - item[10]) ** 2 + (item[7] - item[10]) ** 2)/1000  # convert to km
+        #set minimal distance of 1 km
         distance = distance if distance > 1 else 1
         distance_score = 1/(1 + distance)
         # score to starting time by its distance from current time
         t1 = datetime.now().strftime("%H:%M")
         t2 = item[2].split(sep=" ")[1]
+        #get the number of minutes of difference between times
         diff_minutes = datetime.strptime(
             t1, '%H:%M') - datetime.strptime(t2, '%H:%M')
         hours_from_now = diff_minutes.seconds / 60 / 60
+        #set minimal time of 1 hour
         time_from_start_score = 1/hours_from_now if hours_from_now > 1 else 1
-        # score the starting time by daylight
+        # score the starting time by daylight 1 or 0.5
         is_daytime = 1 if datetime.strptime(
             t2, '%H:%M') < datetime.strptime('18:00', '%H:%M') else 0.5
         # weighted score sum
         score = 0.1 + distance_weight*distance_score + \
             time_from_start_score*time_weight + is_daytime*day_light_weight
+        # bonus points for the KNN model prediction :)
         if item[5] == pred:
             score += 0.15
         return score
@@ -89,11 +94,14 @@ class Database:
         # 0 TripDuration 1 StartTime 2 StopTime 3 StartStationID 4 StartStationName	5 StartStationLatitude
         # 6 StartStationLongitude 7 EndStationID 8 EndStationName 9 EndStationLatitude 10 EndStationLongitude
         # 11 BikeID 12 UserType 13 BirthYear 14 Gender 15 TripDuration in min
+
+        #get prediction from the KNN model
         pred = self.predict(loc=loc, time=time)
         ranked_recommendations = sorted(raw,
                                         key=lambda item: self.score(
                                             item, pred),
                                         reverse=True)
+        # choose relevant entries by End Location
         ranked_recommendations = [e[9]
                                   for e in ranked_recommendations if e[9] != loc]
 
@@ -123,17 +131,18 @@ class Database:
 
 
 def create_model(k=29):
+    # load data
     df = pd.read_csv('BikeShare.csv')
     df.index = [x for x in range(1, len(df.values)+1)]
-
+    # select features for model input
     X = df[['TripDuration', 'StartStationID',
             'StartStationLatitude', 'StartStationLongitude', 'TripDurationinmin']].values
-
+    # select the goal
     y = df['EndStationName'].values
-
+    # change the data types
     X = StandardScaler().fit(X).transform(X.astype(float))
     from sklearn.model_selection import train_test_split
-
+    # split data to sets
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=4)
 
@@ -146,6 +155,7 @@ def create_model(k=29):
 
 
 def validation(location, duration, k):
+    #input checks for the different inputs
     if location == "" or location == None:
         return "Start location is mandatory."
     if location.isdigit():
